@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archives</title>
+    <link href="https://cdn.jsdelivr.net/npm/fancyapps@5.0/ui/dist/fancybox/fancybox.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, rgba(99,102,241,0.9), rgba(79,70,229,0.9)), 
+                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 300"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grain)"/></svg>');
+            min-height: 60vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-container {
+            max-width: 800px;
+            padding: 2rem;
+            border-radius: 24px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: var(--shadow);
+        }
+        .hero h1 { font-size: clamp(2.5rem, 5vw, 4rem); font-weight: 800; margin-bottom: 1rem; }
+        .hero p { font-size: 1.25rem; opacity: 0.95; }
+
+        /* Controls */
+        .controls {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .filter-group label { font-weight: 600; color: var(--text); margin-right: 0.5rem; }
+        .tom-select { min-width: 200px; }
+        .pagination { display: flex; gap: 0.5rem; align-items: center; }
+        .btn { 
+            padding: 0.75rem 1.5rem; 
+            border: none; 
+            border-radius: 12px; 
+            background: var(--primary); 
+            color: white; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: all 0.2s; 
+            display: flex; 
+            align-items: center; 
+            gap: 0.5rem;
+        }
+        .btn:hover { background: var(--primary-dark); transform: translateY(-1px); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .page-info { font-weight: 600; font-size: 1.1rem; }
+
+        /* Gallery */
+        .gallery-container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            padding: 1rem 0;
+        }
+        .gallery-item {
+            aspect-ratio: 1;
+            border-radius: 20px;
+            overflow: hidden;
+            background: var(--card-bg);
+            box-shadow: var(--shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+        }
+        .gallery-item:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+        }
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .gallery-item:hover img { transform: scale(1.05); }
+        .item-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(45deg, rgba(99,102,241,0.9), rgba(79,70,229,0.9));
+            opacity: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            transition: opacity 0.3s ease;
+        }
+        .gallery-item:hover .item-overlay { opacity: 1; }
+        .overlay-icon {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 1.2rem;
+            transition: all 0.2s;
+        }
+        .overlay-icon:hover { transform: scale(1.1); }
+        .tags { position: absolute; top: 1rem; left: 1rem; display: flex; flex-wrap: wrap; gap: 0.25rem; }
+        .tag {
+            background: rgba(255,255,255,0.9);
+            color: var(--primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Loader */
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+        .spinner { 
+            width: 50px; 
+            height: 50px; 
+            border: 4px solid rgba(99,102,241,0.2); 
+            border-top: 4px solid var(--primary); 
+            border-radius: 50%; 
+            animation: spin 1s linear infinite; 
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Footer */
+        .footer {
+            background: var(--card-bg);
+            border-top: 1px solid rgba(0,0,0,0.05);
+            padding: 2rem;
+            text-align: center;
+            margin-top: 4rem;
+        }
+        .footer p { margin-bottom: 0.5rem; }
+        .contribute-btn {
+            background: var(--primary);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .contribute-btn:hover { background: var(--primary-dark); transform: translateY(-1px); }
+
+        @media (max-width: 768px) {
+            .controls { flex-direction: column; gap: 1.5rem; }
+            .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <h1>Image Gallery</h1>
+            <p>Browse through our visual archives</p>
+        </div>
+    </section>
+
+    <!-- Controls -->
+    <div class="controls">
+        <div class="filter-group">
+            <label for="tagFilter">Filter by:</label>
+            <select id="tagFilter" class="tom-select">
+                <option value="all">All Events</option>
+            </select>
+        </div>
+        <div class="pagination">
+            <button id="prevBtn" class="btn" disabled><i class="fas fa-chevron-left"></i> Prev</button>
+            <span id="pageInfo" class="page-info"></span>
+            <button id="nextBtn" class="btn">Next <i class="fas fa-chevron-right"></i></button>
+        </div>
+    </div>
+
+    <!-- Gallery -->
+    <div class="gallery-container">
+        <div id="globalLoader" class="loader">
+            <div class="spinner"></div>
+            <p>Loading gallery...</p>
+        </div>
+        <div class="gallery-grid" id="galleryGrid"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 ML series (LogicLooM) | Using any data is prohibited without explicit permission</p>
+            <a href="#contribute" class="contribute-btn">
+                <i class="fas fa-plus-circle"></i> Contribute to Gallery
+            </a>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/fancyapps@5.0/ui/dist/fancybox.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    <script>
+        const IMAGES_PER_PAGE = 12;
+        let allImages = [];
+        let currentTag = 'all';
+        let currentPage = 1;
+
+        const tagFilter = document.getElementById('tagFilter');
+        const galleryGrid = document.getElementById('galleryGrid');
+        const pageInfo = document.getElementById('pageInfo');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const globalLoader = document.getElementById('globalLoader');
+
+        async function fetchImages() {
+            globalLoader.style.display = 'block';
+            galleryGrid.style.opacity = '0.5';
+            
+            try {
+                const res = await fetch(`images.json?cacheBust=${Date.now()}`);
+                allImages = await res.json();
+                populateTagOptions();
+                renderGallery();
+            } catch (error) {
+                console.error('Failed to load images:', error);
+                galleryGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 4rem; color: #64748b;">Failed to load gallery. Please try again later.</div>';
+            } finally {
+                globalLoader.style.display = 'none';
+                galleryGrid.style.opacity = '1';
+            }
+        }
+
+        function populateTagOptions() {
+            const tags = new Set();
+            allImages.forEach(img => img.tags.forEach(tag => tags.add(tag)));
+
+            // Clear and repopulate
+            tagFilter.innerHTML = '<option value="all">All Events</option>';
+            tags.forEach(tag => {
+                const option = document.createElement('option');
+                option.value = tag;
+                option.textContent = tag.charAt(0).toUpperCase() + tag.slice(1);
+                tagFilter.appendChild(option);
+            });
+
+            // Initialize TomSelect
+            if (tagFilter.tomselect) tagFilter.tomselect.destroy();
+            new TomSelect(tagFilter, {
+                create: false,
+                sortField: { field: "text", direction: "asc" },
+                placeholder: "Select an event..."
+            });
+        }
+
+        function renderGallery() {
+            let filteredImages = currentTag === 'all' 
+                ? allImages 
+                : allImages.filter(img => img.tags.includes(currentTag));
+            
+            filteredImages = filteredImages.reverse();
+            const totalPages = Math.ceil(filteredImages.length / IMAGES_PER_PAGE);
+            currentPage = Math.max(1, Math.min(currentPage, totalPages));
+            
+            const start = (currentPage - 1) * IMAGES_PER_PAGE;
+            const imagesToShow = filteredImages.slice(start, start + IMAGES_PER_PAGE);
+
+            galleryGrid.innerHTML = imagesToShow.map(img => `
+                <div class="gallery-item" data-fancybox="gallery" data-src="img/${img.filename}" data-caption="${img.tags.join(', ')}">
+                    <img src="img/${img.filename}" alt="${img.filename}" loading="lazy">
+                    <div class="item-overlay">
+                        <div class="overlay-icon" onclick="Fancybox.open({src: 'img/${img.filename}', type: 'image'})" title="Zoom">
+                            <i class="fas fa-search-plus"></i>
+                        </div>
+                        <div class="overlay-icon" onclick="downloadImage('img/${img.filename}')" title="Download">
+                            <i class="fas fa-download"></i>
+                        </div>
+                        <div class="overlay-icon" onclick="event.stopPropagation(); toggleSlideshow()" title="Slideshow">
+                            <i class="fas fa-play-circle"></i>
+                        </div>
+                    </div>
+                    <div class="tags">
+                        ${img.tags.slice(0, 3).map(tag => `<span class="tag">${tag}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+
+            // Re-init Fancybox
+            Fancybox.bind("[data-fancybox]", {});
+        }
+
+        function downloadImage(url) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = url.split('/').pop();
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function toggleSlideshow() {
+            Fancybox.open(allImages.map(img => ({ src: `img/${img.filename}` })), {});
+        }
+
+        // Event Listeners
+        tagFilter.addEventListener('change', () => {
+            currentTag = tagFilter.value;
+            currentPage = 1;
+            renderGallery();
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderGallery();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            currentPage++;
+            renderGallery();
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') prevBtn.click();
+            if (e.key === 'ArrowRight') nextBtn.click();
+        });
+
+        // Initialize
+        fetchImages();
+        Fancybox.defaults.Toolbar = true;
+        Fancybox.defaults.buttons = ["zoom", "slideShow", "thumbs", "close"];
+    </script>
+</body>
+</html>
